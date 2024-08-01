@@ -125,13 +125,21 @@ public class BookingApiTests extends BaseTest {
     @Order(3)
     @DisplayName("Booking data can be partially updated")
     public void partialyUpdateBooking() throws Exception{
-        bookingData.setFirstname("UpdatedName");
-        bookingData.setAdditionalneeds("Updated additional needs");
-
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
                 .setData("{ \"totalprice\": 999").setHeader("Cookie", "token=" + authToken));
 
         assertTrue(booking.ok());
         assertEquals(200, booking.status());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("Booking data can be deleted")
+    public void deleteBooking() throws Exception{
+        APIResponse booking = request.delete("/booking/" + bookingId, RequestOptions.create()
+                .setHeader("Cookie", "token=" + authToken));
+
+        assertTrue(booking.ok());
+        assertEquals(201, booking.status());
     }
 }
