@@ -18,7 +18,7 @@ public class BookingApiSchemaValidationTests extends BaseTest{
     //    Schema validation test
     @Test
     @DisplayName("Validate response schema for fetched booking")
-    public void schemaValidation() throws Exception{
+    public void bookingDataFetchedWithProperSchema() throws Exception{
         int bookingId = getRandomBookingId();
         APIResponse booking = request.get("/booking/" + bookingId);
 
@@ -36,7 +36,7 @@ public class BookingApiSchemaValidationTests extends BaseTest{
     //    Schema validation test with custom assertion
     @Test
     @DisplayName("Validate response schema for fetched booking - custom assertion")
-    public void schemaValidation_CustomAssertion() throws Exception{
+    public void bookingDataFetchedWithProperSchemaCustomAssertion() throws Exception{
         int bookingId = getRandomBookingId();
         APIResponse booking = request.get("/booking/" + bookingId);
 

@@ -57,7 +57,7 @@ public class BookingApiTests extends BaseTest {
 
 //        Read test data from json file
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        bookingData = mapper.readValue(classloader.getResourceAsStream("test-data/properBooking.json"),
+        bookingData = mapper.readValue(classloader.getResourceAsStream("test-data/proper-booking.json"),
                 BookingData.class);
 
 //        Send POST request to create booking
@@ -110,7 +110,7 @@ public class BookingApiTests extends BaseTest {
     @Test
     @Order(2)
     @DisplayName("Booking data can be updated")
-    public void updateBooking() throws Exception{
+    public void bookingCanBeUpdated() throws Exception{
         bookingData.setFirstname("UpdatedName");
         bookingData.setAdditionalneeds("Updated additional needs");
 
@@ -123,8 +123,8 @@ public class BookingApiTests extends BaseTest {
 
     @Test
     @Order(3)
-    @DisplayName("Booking data can be partially updated")
-    public void partialyUpdateBooking() throws Exception{
+    @DisplayName("Booking data can be updated with partial data")
+    public void bookingCanBePartiallyUpdated() throws Exception{
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
                 .setData("{ \"totalprice\": 999").setHeader("Cookie", "token=" + authToken));
 
@@ -135,7 +135,7 @@ public class BookingApiTests extends BaseTest {
     @Test
     @Order(4)
     @DisplayName("Booking data can be deleted")
-    public void deleteBooking() throws Exception{
+    public void bookingCanBeDeleted() throws Exception{
         APIResponse booking = request.delete("/booking/" + bookingId, RequestOptions.create()
                 .setHeader("Cookie", "token=" + authToken));
 

@@ -22,7 +22,7 @@ public class BookingApiNegativeTests extends BaseTest{
 
     @Test
     @DisplayName("Check 404 is thrown with error message for improper endpoint")
-    void statusCode404ForImproperNodeId(){
+    void statusCode404IsReturnedForImproperNodeId(){
         APIResponse booking = request.get("/bookingImproper");
 
 //        Assert response is not successful
@@ -34,7 +34,7 @@ public class BookingApiNegativeTests extends BaseTest{
 
     @Test
     @DisplayName("Booking data cannot be updated with improper token")
-    public void cannotUpdateBooking_invalidToken() throws Exception{
+    public void cannotUpdateBookingWithInvalidToken() throws Exception{
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
                 .setData("{ \"username\": \"Updateduser\"").setHeader("Cookie", "token=invalid_" + authToken));
 
