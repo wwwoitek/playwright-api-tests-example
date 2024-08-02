@@ -1,0 +1,11 @@
+{
+  "baseUrl": "https://restful-booker.herokuapp.com/",
+  "valid_user": {
+    "username": "admin",
+    "password": "password123"
+  },
+  "invalid_user": {
+    "username": "invalid",
+    "password": "password123"
+  }
+}

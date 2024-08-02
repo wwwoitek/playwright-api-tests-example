@@ -24,13 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseTest {
 
-    private String USER_NAME = "admin";
-    private String USER_PASSWORD = "password123";
-    private Properties properties;
     protected String authToken = "";
     protected APIRequestContext request;
     protected Playwright playwright;
-    public String BASE_URL = "https://restful-booker.herokuapp.com/";
+    public String BASE_URL;
+    private JsonNode CONFIG;
+
+    BaseTest(){
+        CONFIG = getConfigData();
+
+        BASE_URL = CONFIG.get("baseUrl").asText();
+    }
 
     @BeforeAll
     void beforeAll() {
@@ -48,27 +52,31 @@ public class BaseTest {
         closePlaywright();
     }
 
-    void createPlaywright() {
+    private void createPlaywright() {
         playwright = Playwright.create();
     }
 
-    void createApiRequestContext() {
+    private void createApiRequestContext() {
         Map<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/json");
+
+//        Get base url from env variables if exists or the declared one
+        String envUrl = System.getenv("PLAYWRIGHT_BASE_URL");
+        BASE_URL = (envUrl != null) ? envUrl : BASE_URL;
 
         request = playwright.request().newContext(new APIRequest.NewContextOptions()
                 .setBaseURL(BASE_URL)
                 .setExtraHTTPHeaders(headers));
     }
 
-    void disposeAPIRequestContext() {
+    private void disposeAPIRequestContext() {
         if (request != null) {
             request.dispose();
             request = null;
         }
     }
 
-    void closePlaywright() {
+    private void closePlaywright() {
         if (playwright != null) {
             playwright.close();
             playwright = null;
@@ -82,8 +90,8 @@ public class BaseTest {
         String jsonCredentials = "a";
 
         ObjectNode credentials = mapper.createObjectNode();
-        credentials.put("username", USER_NAME);
-        credentials.put("password", USER_PASSWORD);
+        credentials.put("username", CONFIG.get("valid_user").get("username").asText());
+        credentials.put("password", CONFIG.get("valid_user").get("password").asText());
 
         try {
             jsonCredentials = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(credentials);
@@ -108,5 +116,14 @@ public class BaseTest {
         int randomId = bookingsNode.get(rand.nextInt(bookingsNode.size())).get("bookingid").asInt();
 
         return randomId;
+    }
+
+    @SneakyThrows
+    public JsonNode getConfigData(){
+        ObjectMapper mapper = new ObjectMapper();
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        JsonNode config = mapper.readTree(classloader.getResourceAsStream("test-data/config.json"));
+
+        return config;
     }
 }

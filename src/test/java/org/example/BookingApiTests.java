@@ -26,6 +26,7 @@ public class BookingApiTests extends BaseTest {
         APIResponse bookings = request.get("/booking");
         assertTrue(bookings.ok());
         assertNotNull(bookings);
+        assertEquals(200, bookings.status());
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode bookingsNode = null;
@@ -47,6 +48,7 @@ public class BookingApiTests extends BaseTest {
 
         assertTrue(booking.ok());
         assertNotNull(booking);
+        assertEquals(200, booking.status());
     }
 
     @Order(1)
@@ -125,8 +127,10 @@ public class BookingApiTests extends BaseTest {
     @Order(3)
     @DisplayName("Booking data can be updated with partial data")
     public void bookingCanBePartiallyUpdated() throws Exception{
+        bookingData.setTotalprice(999);
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
-                .setData("{ \"totalprice\": 999").setHeader("Cookie", "token=" + authToken));
+                .setData("{ \"totalprice\": " + bookingData.getTotalprice())
+                .setHeader("Cookie", "token=" + authToken));
 
         assertTrue(booking.ok());
         assertEquals(200, booking.status());
