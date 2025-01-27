@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BookingApiTests extends BaseTest {
 
-    private BookingData bookingData;
     private int bookingId;
 
     @Test
@@ -55,12 +54,7 @@ public class BookingApiTests extends BaseTest {
     @Test
     @DisplayName("Booking can be created with POST method. Response contains data sent in request")
     void bookingCanBeCreatedWithFullData() throws Exception{
-        ObjectMapper mapper = new ObjectMapper();
-
-//        Read test data from json file
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        bookingData = mapper.readValue(classloader.getResourceAsStream("test-data/proper-booking.json"),
-                BookingData.class);
+        BookingData bookingData = BookingData.getBookingDataFromFile("test-data/proper-booking.json");
 
 //        Send POST request to create booking
         APIResponse booking = request.post("/booking", RequestOptions.create().setData(bookingData));
@@ -68,7 +62,9 @@ public class BookingApiTests extends BaseTest {
         assertTrue(booking.ok());
         assertEquals(200, booking.status());
 
+
 //      Convert response data to JSON object
+        ObjectMapper mapper = new ObjectMapper();
         JsonNode bookingNode;
         JsonNode bookingDataNode = mapper.readTree(booking.text());
 
@@ -78,32 +74,7 @@ public class BookingApiTests extends BaseTest {
 //        Convert booking node to JSON object
         bookingNode = bookingDataNode.get("booking");
 
-
-//        Assert proper data received in response
-        assertEquals(bookingData.getFirstname(), bookingNode.get("firstname").asText());
-        assertEquals(bookingData.getLastname(), bookingNode.get("lastname").asText());
-        assertEquals(bookingData.getTotalprice(), bookingNode.get("totalprice").asInt());
-        assertEquals(bookingData.isDepositpaid(), bookingNode.get("depositpaid").asBoolean());
-        assertEquals(bookingData.getAdditionalneeds(), bookingNode.get("additionalneeds").asText());
-        assertEquals(bookingData.getBookingdates().getCheckin(), bookingNode.path("bookingdates")
-                .get("checkin").asText());
-        assertEquals(bookingData.getBookingdates().getCheckout(), bookingNode.path("bookingdates")
-                .get("checkout").asText());
-
-
-//        Alternative way of assert with assertAll - all assertions checked and then pontential errors thrown,
-//        this approach do not break when first assertion failed (opposite to approach above)
-        assertAll("Assert all booking data together",
-                () -> assertEquals(bookingData.getFirstname(), bookingNode.get("firstname").asText()),
-                () -> assertEquals(bookingData.getLastname(), bookingNode.get("lastname").asText()),
-                () -> assertEquals(bookingData.getTotalprice(), bookingNode.get("totalprice").asInt()),
-                () -> assertEquals(bookingData.isDepositpaid(), bookingNode.get("depositpaid").asBoolean()),
-                () -> assertEquals(bookingData.getAdditionalneeds(), bookingNode.get("additionalneeds").asText()),
-                () -> assertEquals(bookingData.getBookingdates().getCheckin(), bookingNode.path("bookingdates")
-                        .get("checkin").asText()),
-                () -> assertEquals(bookingData.getBookingdates().getCheckout(), bookingNode.path("bookingdates")
-                        .get("checkout").asText())
-                );
+        assertEquals(bookingDataNode,bookingNode);
 
 //        Another alternative using external library (json-unit-assertj) for asserting JSON nodes
         assertThatJson(bookingNode).isEqualTo(bookingData);
@@ -113,8 +84,10 @@ public class BookingApiTests extends BaseTest {
     @Order(2)
     @DisplayName("Booking data can be updated")
     public void bookingCanBeUpdated() throws Exception{
-        bookingData.setFirstname("UpdatedName");
-        bookingData.setAdditionalneeds("Updated additional needs");
+        BookingData bookingData = BookingData.getBookingDataFromFile("test-data/proper-booking.json");
+
+        bookingData.setFirstName("UpdatedName");
+        bookingData.setAdditionalNeeds("Updated additional needs");
 
         APIResponse booking = request.put("/booking/" + bookingId, RequestOptions.create()
                 .setHeader("Cookie", "token=" + authToken).setData(bookingData));
@@ -124,12 +97,13 @@ public class BookingApiTests extends BaseTest {
     }
 
     @Test
-    @Order(3)
     @DisplayName("Booking data can be updated with partial data")
     public void bookingCanBePartiallyUpdated() throws Exception{
-        bookingData.setTotalprice(999);
+        BookingData bookingData = BookingData.getBookingDataFromFile("test-data/proper-booking.json");
+
+        bookingData.setTotalPrice(999);
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
-                .setData("{ \"totalprice\": " + bookingData.getTotalprice())
+                .setData("{ \"totalprice\": " + bookingData.getTotalPrice())
                 .setHeader("Cookie", "token=" + authToken));
 
         assertTrue(booking.ok());
@@ -140,6 +114,20 @@ public class BookingApiTests extends BaseTest {
     @Order(4)
     @DisplayName("Booking data can be deleted")
     public void bookingCanBeDeleted() throws Exception{
+
+        BookingData bookingData = BookingData.getBookingDataFromFile("test-data/proper-booking.json");
+
+//        Send POST request to create booking
+        APIResponse bookingCreateResponse = request.post("/booking", RequestOptions.create().setData(bookingData));
+//        Assert response is not null and proper response code received
+        assertTrue(bookingCreateResponse.ok());
+        assertEquals(200, bookingCreateResponse.status());
+
+        //      Avoiding test dependency with creating data to be deleted and delete it within one test.
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode bookingDataNode = mapper.readTree(bookingCreateResponse.text());
+        int bookingId = bookingDataNode.get("bookingid").asInt();
+
         APIResponse booking = request.delete("/booking/" + bookingId, RequestOptions.create()
                 .setHeader("Cookie", "token=" + authToken));
 

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -103,14 +104,18 @@ public class BaseTest {
         }
     }
 
-    @SneakyThrows
+
     public int getRandomBookingId(){
         APIResponse bookings = request.get("/booking");
         assertTrue(bookings.ok());
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode bookingsNode = null;
-        bookingsNode = mapper.readTree(bookings.text());
+        try {
+            bookingsNode = mapper.readTree(bookings.text());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         Random rand = new Random();
         int randomId = bookingsNode.get(rand.nextInt(bookingsNode.size())).get("bookingid").asInt();
@@ -118,11 +123,15 @@ public class BaseTest {
         return randomId;
     }
 
-    @SneakyThrows
     public JsonNode getConfigData(){
         ObjectMapper mapper = new ObjectMapper();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        JsonNode config = mapper.readTree(classloader.getResourceAsStream("test-data/config.json"));
+        JsonNode config = null;
+        try {
+            config = mapper.readTree(classloader.getResourceAsStream("test-data/config.json"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         return config;
     }

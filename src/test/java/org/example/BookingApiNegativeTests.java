@@ -13,7 +13,6 @@ public class BookingApiNegativeTests extends BaseTest{
 
     private int bookingId;
 
-    @SneakyThrows
     @BeforeAll
     public void beforeAll() {
         super.beforeAll();
