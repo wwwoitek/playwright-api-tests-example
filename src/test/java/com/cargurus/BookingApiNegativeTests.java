@@ -1,17 +1,15 @@
-package org.example;
+package com.cargurus;
 
 import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.options.RequestOptions;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BookingApiNegativeTests extends BaseTest{
 
-    private int bookingId;
+    private String bookingId;
 
     @BeforeAll
     public void beforeAll() {
@@ -33,7 +31,7 @@ public class BookingApiNegativeTests extends BaseTest{
 
     @Test
     @DisplayName("Booking data cannot be updated with improper token")
-    public void cannotUpdateBookingWithInvalidToken() throws Exception{
+    public void cannotUpdateBookingWithInvalidToken() {
         APIResponse booking = request.patch("/booking/" + bookingId, RequestOptions.create()
                 .setData("{ \"username\": \"Updateduser\"").setHeader("Cookie", "token=invalid_" + authToken));
 

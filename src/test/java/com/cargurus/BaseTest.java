@@ -1,6 +1,8 @@
-package org.example;
+package com.cargurus;
 
+import com.cargurus.dataclasses.BookingId;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,15 +11,16 @@ import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.RequestOptions;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,7 +32,7 @@ public class BaseTest {
     protected APIRequestContext request;
     protected Playwright playwright;
     public String BASE_URL;
-    private JsonNode CONFIG;
+    private final JsonNode CONFIG;
 
     BaseTest(){
         CONFIG = getConfigData();
@@ -88,7 +91,7 @@ public class BaseTest {
         RequestOptions options = RequestOptions.create();
         options.setHeader("Content-Type", "application/json");
         ObjectMapper mapper = new ObjectMapper();
-        String jsonCredentials = "a";
+        String jsonCredentials;
 
         ObjectNode credentials = mapper.createObjectNode();
         credentials.put("username", CONFIG.get("valid_user").get("username").asText());
@@ -104,29 +107,53 @@ public class BaseTest {
         }
     }
 
-
-    public int getRandomBookingId(){
+    public List<BookingId> getBookingIdsList(){
         APIResponse bookings = request.get("/booking");
-        assertTrue(bookings.ok());
+        assertTrue(bookings.ok(), "Bookings list request failed");
 
+        return responseToBookingIdsList(bookings);
+    }
+
+    protected List<BookingId> responseToBookingIdsList(APIResponse response){
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode bookingsNode = null;
+        List<BookingId> bookingIds;
         try {
-            bookingsNode = mapper.readTree(bookings.text());
+            bookingIds = mapper.readValue(response.text(), new TypeReference<>() {
+            });
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
-        Random rand = new Random();
-        int randomId = bookingsNode.get(rand.nextInt(bookingsNode.size())).get("bookingid").asInt();
+        return bookingIds;
+    }
 
-        return randomId;
+    public String getRandomBookingId(){
+        return getRandomBookingId(1).getFirst();
+    }
+
+    public List<String> getRandomBookingId(int numberOfBookings) {
+        List<BookingId> bookingIdsList = getBookingIdsList();
+        if (bookingIdsList.size() < numberOfBookings) {
+            throw new RuntimeException("Booking list contains only " + bookingIdsList.size() +
+                " bookings. " + numberOfBookings + " requested.");
+        }
+
+        HashSet<String> bookingIds = new HashSet<>();
+
+        while (bookingIds.size() < numberOfBookings) {
+            Random rand = new Random();
+            String bookingId = bookingIdsList.get(rand.nextInt(bookingIdsList.size())).getBookingId();
+            bookingIds.add(bookingId);
+        }
+
+        return new ArrayList<>(bookingIds);
     }
 
     public JsonNode getConfigData(){
         ObjectMapper mapper = new ObjectMapper();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        JsonNode config = null;
+        JsonNode config;
         try {
             config = mapper.readTree(classloader.getResourceAsStream("test-data/config.json"));
         } catch (IOException e) {
